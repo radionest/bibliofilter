@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bibliography Filter Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            margin-bottom: 40px;
+        }
+
+        .drop-zone {
+            border: 3px dashed #4facfe;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.05) 100%);
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: #00f2fe;
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+            transform: translateY(-2px);
+        }
+
+        .drop-zone.has-file {
+            border-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+        }
+
+        .drop-zone i {
+            font-size: 4rem;
+            color: #4facfe;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .drop-zone.has-file i {
+            color: #10b981;
+        }
+
+        .drop-zone h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #334155;
+        }
+
+        .drop-zone p {
+            color: #64748b;
+            font-size: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .filter-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .citation-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .citation-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8fafc;
+            color: #475569;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .results-section {
+            margin-top: 40px;
+        }
+
+        .results-info {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 1px solid #bae6fd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .results-info h4 {
+            color: #0369a1;
+            margin-bottom: 10px;
+        }
+
+        .results-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #0369a1;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .results-preview {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .results-preview pre {
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: #374151;
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .citation-key-item {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin: 2px;
+            display: inline-block;
+            font-family: 'Courier New', monospace;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Bibliography Filter Tool</h1>
+            <p>Фильтрация библиографических данных по citation-key</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <h2 class="section-title">📁 Загрузка библиографии</h2>
+                <div class="drop-zone" id="dropZone">
+                    <i>📄</i>
+                    <h3>Перетащите JSON файл сюда</h3>
+                    <p>или нажмите для выбора файла</p>
+                    <input type="file" id="fileInput" class="file-input" accept=".json">
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <h2 class="section-title">🔍 Фильтрация</h2>
+                <div class="input-group">
+                    <label for="citationKeys" class="input-label">
+                        Citation Keys (разделенные запятыми, пробелами или новыми строками):
+                    </label>
+                    <textarea 
+                        id="citationKeys" 
+                        class="citation-input" 
+                        placeholder="Введите citation-key, например:&#10;abdalkhalikbashaDiagnosticEfficacyLiver2017&#10;el-seragFibrolamellarCarcinomaDifferent2004&#10;ganeshanImagingFeaturesFibrolamellar2014"
+                    ></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button id="filterBtn" class="btn btn-primary" disabled>
+                        🔍 Фильтровать
+                    </button>
+                    <button id="clearBtn" class="btn btn-secondary">
+                        🗑️ Очистить
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <h2 class="section-title">📊 Результаты</h2>
+                <div class="results-info" id="resultsInfo"></div>
+                <div class="button-group">
+                    <button id="downloadBtn" class="btn btn-primary">
+                        💾 Скачать отфильтрованный JSON
+                    </button>
+                    <button id="copyBtn" class="btn btn-secondary">
+                        📋 Копировать в буфер
+                    </button>
+                </div>
+                <div class="results-preview" id="resultsPreview"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class BibliographyFilter {
+            constructor() {
+                this.originalData = null;
+                this.filteredData = null;
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                const dropZone = document.getElementById('dropZone');
+                const fileInput = document.getElementById('fileInput');
+                const filterBtn = document.getElementById('filterBtn');
+                const clearBtn = document.getElementById('clearBtn');
+                const downloadBtn = document.getElementById('downloadBtn');
+                const copyBtn = document.getElementById('copyBtn');
+
+                // Drag and drop events
+                dropZone.addEventListener('click', () => fileInput.click());
+                dropZone.addEventListener('dragover', this.handleDragOver.bind(this));
+                dropZone.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                dropZone.addEventListener('drop', this.handleDrop.bind(this));
+
+                // File input
+                fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+
+                // Buttons
+                filterBtn.addEventListener('click', this.filterBibliography.bind(this));
+                clearBtn.addEventListener('click', this.clearAll.bind(this));
+                downloadBtn.addEventListener('click', this.downloadResults.bind(this));
+                copyBtn.addEventListener('click', this.copyToClipboard.bind(this));
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                document.getElementById('dropZone').classList.add('dragover');
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                document.getElementById('dropZone').classList.remove('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                document.getElementById('dropZone').classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.processFile(files[0]);
+                }
+            }
+
+            handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    this.processFile(file);
+                }
+            }
+
+            async processFile(file) {
+                if (!file.name.toLowerCase().endsWith('.json')) {
+                    this.showError('Пожалуйста, выберите JSON файл.');
+                    return;
+                }
+
+                try {
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    
+                    if (!Array.isArray(data)) {
+                        throw new Error('JSON должен содержать массив объектов');
+                    }
+
+                    // Проверяем, что у объектов есть citation-key
+                    const hasValidKeys = data.some(item => 
+                        item && typeof item === 'object' && 'citation-key' in item
+                    );
+
+                    if (!hasValidKeys) {
+                        throw new Error('В JSON не найдены объекты с полем "citation-key"');
+                    }
+
+                    this.originalData = data;
+                    this.updateDropZoneStatus(file.name, data.length);
+                    this.enableFilterButton();
+                    this.hideError();
+                    
+                } catch (error) {
+                    this.showError(`Ошибка обработки файла: ${error.message}`);
+                }
+            }
+
+            updateDropZoneStatus(fileName, itemCount) {
+                const dropZone = document.getElementById('dropZone');
+                dropZone.classList.add('has-file');
+                dropZone.innerHTML = `
+                    <i>✅</i>
+                    <h3>Файл загружен: ${fileName}</h3>
+                    <p>Найдено записей: ${itemCount}</p>
+                `;
+            }
+
+            enableFilterButton() {
+                document.getElementById('filterBtn').disabled = false;
+            }
+
+            parseCitationKeys(input) {
+                if (!input.trim()) return [];
+                
+                // Разделяем по запятым, пробелам, табам и новым строкам
+                return input
+                    .split(/[,\s\n\r\t]+/)
+                    .map(key => key.trim())
+                    .filter(key => key.length > 0);
+            }
+
+            filterBibliography() {
+                if (!this.originalData) {
+                    this.showError('Сначала загрузите JSON файл');
+                    return;
+                }
+
+                const input = document.getElementById('citationKeys').value;
+                const citationKeys = this.parseCitationKeys(input);
+
+                if (citationKeys.length === 0) {
+                    this.showError('Введите хотя бы один citation-key');
+                    return;
+                }
+
+                // Фильтруем данные
+                this.filteredData = this.originalData.filter(item => 
+                    item && citationKeys.includes(item['citation-key'])
+                );
+
+                this.displayResults(citationKeys);
+                this.hideError();
+            }
+
+            displayResults(requestedKeys) {
+                const foundKeys = this.filteredData.map(item => item['citation-key']);
+                const notFoundKeys = requestedKeys.filter(key => !foundKeys.includes(key));
+
+                const resultsInfo = document.getElementById('resultsInfo');
+                resultsInfo.innerHTML = `
+                    <h4>📈 Статистика фильтрации</h4>
+                    <div class="results-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">${requestedKeys.length}</div>
+                            <div class="stat-label">Запрошено</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${foundKeys.length}</div>
+                            <div class="stat-label">Найдено</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${notFoundKeys.length}</div>
+                            <div class="stat-label">Не найдено</div>
+                        </div>
+                    </div>
+                    ${notFoundKeys.length > 0 ? `
+                        <div style="margin-top: 15px;">
+                            <strong>Не найдены:</strong><br>
+                            ${notFoundKeys.map(key => `<span class="citation-key-item">${key}</span>`).join(' ')}
+                        </div>
+                    ` : ''}
+                    ${foundKeys.length > 0 ? `
+                        <div style="margin-top: 15px;">
+                            <strong>Найдены:</strong><br>
+                            ${foundKeys.map(key => `<span class="citation-key-item">${key}</span>`).join(' ')}
+                        </div>
+                    ` : ''}
+                `;
+
+                const preview = document.getElementById('resultsPreview');
+                preview.innerHTML = `<pre>${JSON.stringify(this.filteredData, null, 2)}</pre>`;
+
+                document.getElementById('resultsSection').style.display = 'block';
+                
+                if (foundKeys.length > 0) {
+                    this.showSuccess(`Успешно отфильтровано ${foundKeys.length} из ${requestedKeys.length} записей`);
+                }
+            }
+
+            downloadResults() {
+                if (!this.filteredData) return;
+
+                const blob = new Blob([JSON.stringify(this.filteredData, null, 2)], {
+                    type: 'application/json'
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'filtered_bibliography.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            async copyToClipboard() {
+                if (!this.filteredData) return;
+
+                try {
+                    await navigator.clipboard.writeText(JSON.stringify(this.filteredData, null, 2));
+                    this.showSuccess('Результат скопирован в буфер обмена');
+                } catch (error) {
+                    this.showError('Не удалось скопировать в буфер обмена');
+                }
+            }
+
+            clearAll() {
+                this.originalData = null;
+                this.filteredData = null;
+                
+                const dropZone = document.getElementById('dropZone');
+                dropZone.classList.remove('has-file');
+                dropZone.innerHTML = `
+                    <i>📄</i>
+                    <h3>Перетащите JSON файл сюда</h3>
+                    <p>или нажмите для выбора файла</p>
+                `;
+
+                document.getElementById('citationKeys').value = '';
+                document.getElementById('filterBtn').disabled = true;
+                document.getElementById('resultsSection').style.display = 'none';
+                document.getElementById('fileInput').value = '';
+                
+                this.hideError();
+                this.hideSuccess();
+            }
+
+            showError(message) {
+                this.hideSuccess();
+                let errorDiv = document.getElementById('errorMessage');
+                if (!errorDiv) {
+                    errorDiv = document.createElement('div');
+                    errorDiv.id = 'errorMessage';
+                    errorDiv.className = 'error-message';
+                    document.querySelector('.main-content').insertBefore(errorDiv, document.querySelector('.upload-section'));
+                }
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+
+            showSuccess(message) {
+                this.hideError();
+                let successDiv = document.getElementById('successMessage');
+                if (!successDiv) {
+                    successDiv = document.createElement('div');
+                    successDiv.id = 'successMessage';
+                    successDiv.className = 'success-message';
+                    document.querySelector('.main-content').insertBefore(successDiv, document.querySelector('.upload-section'));
+                }
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+            }
+
+            hideError() {
+                const errorDiv = document.getElementById('errorMessage');
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+            }
+
+            hideSuccess() {
+                const successDiv = document.getElementById('successMessage');
+                if (successDiv) {
+                    successDiv.style.display = 'none';
+                }
+            }
+        }
+
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            new BibliographyFilter();
+        });
+    </script>
+</body>
+</html>
